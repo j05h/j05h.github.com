@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: raspberrypi | j05h's mu5ings]]></title>
+  <link href="http://j05h.github.com/blog/categories/raspberrypi/atom.xml" rel="self"/>
+  <link href="http://j05h.github.com/"/>
+  <updated>2012-06-30T00:05:38-05:00</updated>
+  <id>http://j05h.github.com/</id>
+  <author>
+    <name><![CDATA[Josh Kleinpeter]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Raspberries are for hackers]]></title>
+    <link href="http://j05h.github.com/blog/2012/06/29/raspberries-are-for-hackers/"/>
+    <updated>2012-06-29T23:06:00-05:00</updated>
+    <id>http://j05h.github.com/blog/2012/06/29/raspberries-are-for-hackers</id>
+    <content type="html"><![CDATA[<p>I just got 2 <a href="http://raspberrypi.org/">Raspberry Pis</a> this week. I immediately ordered an <a href="http://www.amazon.com/gp/product/B0055QYJJM/ref=as_li_ss_tl?ie=UTF8&amp;tag=kleinpeterorg-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=B0055QYJJM">HP Touchpad charger</a> and 2 <a href="http://www.amazon.com/gp/product/B003VNKNEQ/ref=as_li_ss_tl?ie=UTF8&amp;tag=kleinpeterorg-20&amp;linkCode=as2&amp;camp=1789&amp;creative=390957&amp;creativeASIN=B003VNKNEQ">16GB SD cards</a>. Got those today, so I started setting up my first pi (pi).</p>
+
+<p>First, I grabbed <a href="http://downloads.raspberrypi.org/images/debian/6/debian6-19-04-2012/debian6-19-04-2012.zip">debian6-19-04-2012.zip</a> (SHA-1 1852df83a11ee7083ca0e5f3fb41f93ecc59b1c8).</p>
+
+<p>Once downloaded, I was off to the races:</p>
+
+<pre><code>shasum ~/Downloads/debian6-19-04-2012.zip
+# should be 1852df83a11ee7083ca0e5f3fb41f93ecc59b1c8
+unzip ~/Downloads/debian6-19-04-2012.zip
+df -h
+# pop in the SD card
+df -h
+# check to see what the new /dev device is
+diskutil unmount /dev/diskXs1
+# note that X will be the same for each disk
+sudo dd bs=1m if=~/Downloads/debian6-19-04-2012/debian6-19-04-2012.img of=/dev/rdiskX
+diskutil eject /dev/rdiskX
+</code></pre>
+
+<p>Now that's done, the SD card was ready, and I popped it in the Pi.</p>
+
+<p>I want to use my Pi remotely, so I needed to set up an SSH server (obnoxious the OS doesn't have it preinstalled). That's fairly easy. I connected to my HDTV, keyboard, and ethernet.</p>
+
+<p>To log in initially:</p>
+
+<pre><code>User:pi
+Pass:raspberry
+</code></pre>
+
+<p>Now I just installed sshd:</p>
+
+<pre><code>sudo apt-get install openssh-server
+</code></pre>
+
+<p>And also, found out my IP address (my router uses sticky DHCP).</p>
+
+<pre><code>ifconfig eth0 | grep inet
+</code></pre>
+
+<p>At this point, I disconnected, and went back to the comfort of my man cave. If you don't remember your IP or it changes, you can check the hosts on your network with:</p>
+
+<pre><code>arp -a #my pi shows up as ubuntu for some reason...
+</code></pre>
+
+<p>Now you can log in!</p>
+
+<pre><code>ssh pi@192.168.1.XYZ #password 'raspberry' still
+</code></pre>
+
+<p>Now I went ahead and added my public key into ~/.ssh/authorized_hosts</p>
+
+<p>Next, I wanted to be able to access my pi easily.</p>
+
+<pre><code>echo 'pie' | sudo tee /etc/hostname
+sudo sed -i 's/raspberrypi/pie/g' /etc/hosts
+sudo apt-get install avahi-daemon
+sudo apt-get install libnss-mdns
+sudo sed -i 's/mdns4$/mdns4 mdns/' /etc/nsswitch.conf
+</code></pre>
+
+<p>I added the following to /etc/avahi/services/ssh.service</p>
+
+<pre><code>&lt;?xml version="1.0" standalone="no"?&gt;&lt;!--*-nxml-*--&gt;
+&lt;!DOCTYPE service-group SYSTEM "avahi-service.dtd"&gt;
+&lt;service-group&gt;
+  &lt;name replate-wildcards="yes"&gt;%h SSH&lt;/name&gt;
+  &lt;service&gt;
+    &lt;type&gt;_ssh._tcp&lt;/type&gt;
+    &lt;port&gt;22&lt;/port&gt;
+  &lt;/service&gt;
+&lt;/service-group&gt;
+</code></pre>
+
+<p>And restarted avahi:</p>
+
+<pre><code>sudo /etc/init.d/avahi-daemon restart
+</code></pre>
+
+<p>Now, I can easily get to my host from my Mac using Bonjour.</p>
+
+<pre><code>ssh pi@pie.local
+</code></pre>
+
+<p>Next task...I'm wondering if I can get this to work as a media server...</p>
+
+<h3>References</h3>
+
+<blockquote><ol>
+<li><a href="http://elinux.org/RPi_Easy_SD_Card_Setup">SD card setup</a></li>
+<li><a href="http://elsmorian.com/post/23366148056/basic-raspberry-pi-setup">Partition SD card</a></li>
+<li><a href="http://kremalicious.com/ubuntu-as-mac-file-server-and-time-machine-volume/#avahi2">Avahi</a></li>
+</ol>
+</blockquote>
+]]></content>
+  </entry>
+  
+</feed>
